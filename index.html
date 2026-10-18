@@ -80,7 +80,31 @@ const bump=n=>{const o=rel;af=Math.max(0,Math.min(100,af+n));rel=af>=75?2:af>=45
 const IM={},av=(i,s)=>(i==0?MY.img:IM[i])?`<img class=av data-p=${i} src="${i==0?MY.img:IM[i]}" style="width:${s}px;height:${s}px">`:`<span class=av data-p=${i} style="width:${s}px;height:${s}px;background:${AV[i][0]};font-size:${s*.55|0}px">${AV[i][1]}</span>`;
 function ab(){return;const f=Math.max(0,AB)/AM;$("abf").style.width=f*100+"%";$("abf").style.background=f>.5?"#7be495":f>.25?"#ffd166":"#ff5d5d";$("abt").textContent=`AI ${f>.25?"":"절약 "}${Math.round(f*100)}%`}
 // AI 관문. ch: "chat"(내 메시지에 답장)·"auto"(선톡/잡담) → 채팅 ▶재생 ON일 때만 / "feed"(🔄새로고침)·"reply"(내 글·댓글에 달리는 댓글) → 유저 동작에서만 호출
-async function ask(p,ch){const chat=ch=="chat"||ch=="auto";if(!SM||!aiOn||Date.now()<pause||(chat&&(!CP||AB<1))||(ch=="auto"&&AB<AM*.25))throw 0;if(chat)AB--;try{return await Promise.race([SM.json(p,{cache:false}),new Promise((_,j)=>setTimeout(()=>j({code:"timeout"}),ch=="auto"?45000:25000))])}catch(e){if(e&&e.code=="rate_limited")pause=Date.now()+90000;throw e}}
+async function ask(p,ch){
+const chat=ch==“chat”||ch==“auto”;
+if(!aiOn||Date.now()<pause||(chat&&(!CP||AB<1))||(ch==“auto”&&AB<AM*.25))throw 0;
+if(chat)AB–;
+try{
+const message=typeof p===“string”?p:JSON.stringify(p);
+const result=await Promise.race([
+fetch(“https://withered-dust-5730.ainjamong0715.workers.dev”,{
+method:“POST”,
+headers:{“Content-Type”:“application/json”},
+body:JSON.stringify({message})
+}).then(async r=>{
+const data=await r.json();
+if(!r.ok)throw new Error(data.error||“Gemini 요청 실패”);
+return {t:data.reply,l:[],news:[],posts:[],p:[],c:[]};
+}),
+new Promise((_,reject)=>setTimeout(()=>reject({code:“timeout”}),ch==“auto”?45000:25000))
+]);
+if(typeof result.t===“string”)return result;
+return result;
+}catch(e){
+if(e&&e.code==“rate_limited”)pause=Date.now()+90000;
+throw e;
+}
+}
 const go=t=>document.querySelector(`nav button[data-t=${t}]`).click(),dot=t=>{if(!$(t).classList.contains("on"))$("d"+t).textContent=" ●"};
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button,section").forEach(e=>e.classList.remove("on"));b.classList.add("on");$(b.dataset.t).classList.add("on");$("d"+b.dataset.t).textContent=""});
 function toast(h,k){const t=$("ts");t.innerHTML=h;t.style.display="block";t.onclick=()=>{t.style.display="none";if(k){go("s");$("rm").value=k;rM();fillR()}else go("d")};clearTimeout(t.x);t.x=setTimeout(()=>t.style.display="none",6000)}
@@ -207,6 +231,5 @@ var CB=0;async function ev(){const q=Math.random;if(!B&&q()<.15)spawn();if(q()<.
 function endDay(){hold=1;RP=RP.map(p=>p+Math.round(Math.random()*40-15));const o=rkO(),dk=o.indexOf(0)+1,dd=PR[0]-dk;rR();$("dy").innerHTML=`<div class=cd style="max-width:360px;margin:12vh auto;text-align:center"><h3>🌙 ${day}일차 종료</h3><p>오늘 파견 ${stats.d}회 · 사건 해결 ${stats.w}건<br>데쿠 랭킹 ${dk}위 ${dd>0?"(▲"+dd+")":dd<0?"(▼"+-dd+")":"(변동 없음)"}<br>TOP3: ${o.slice(0,3).map(i=>NA[i]).join(" · ")}<br>💞 바쿠고와의 관계: ${REL[rel]}${INJ[0]>0?`<br>🤕 부상 회복까지 ${INJ[0]}일`:""}</p><button class=b id=nx>☀️ ${day+1}일차 아침으로</button></div>`;$("dy").style.display="block"}
 $("dy").onclick=e=>{if(e.target.id!="nx")return;day++;gm=420;hold=0;stats={d:0,w:0};healDay();dawn(`☀️ ${day}일차 아침이 밝았어요${INJ[0]>0?` · 🤕 회복까지 ${INJ[0]}일`:""}`,"하루 랭킹 변동 정리, TOP3: "+rkO().slice(0,3).map(i=>NA[i]).join(","))};
 (async()=>{rkO().forEach((i,k)=>PR[i]=k+1);fillR();$("clk").textContent=clk();ab();N=FN2.slice(0,2).map(f=>({g:f[0],t:f[1],b:f[2],w:f[3],tm:clk()}));P=FP.map(f=>mp({t:f[1],c:[{t:R(FC)}]},0));rN();rP();rR();
-try{SM=await claude.use("sample")}catch(e){SM=null}
 setTimeout(incoming,7000);setTimeout(()=>{if(!B)spawn()},4000);clearInterval(TK);TK=setInterval(adv,1000/SPD)})();
 </script></body></html>
